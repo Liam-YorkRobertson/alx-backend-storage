@@ -6,7 +6,6 @@ import requests
 from functools import wraps
 from typing import Callable
 import redis
-from datetime import datetime, timedelta
 
 
 def count_access(func: Callable) -> Callable:
