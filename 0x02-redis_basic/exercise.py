@@ -36,28 +36,23 @@ def call_history(method: Callable) -> Callable:
     return wrapped
 
 
-def replay(fn: Callable):
-    """ Display the history of calls """
-    r = redis.Redis()
-    function_name = fn.__qualname__
-    count = r.get(function_name)
-    try:
-        count = int(count.decode("utf-8"))
-    except Exception:
-        count = 0
-    print(f"{function_name} was called {count} times:")
-    inputs = r.lrange(f"{function_name}:inputs", 0, -1)
-    outputs = r.lrange(f"{function_name}:outputs", 0, -1)
-    for one, two in zip(inputs, outputs):
-        try:
-            one = one.decode('utf-8')
-        except Exception:
-            one = ""
-        try:
-            two = two.decode('utf-8')
-        except Exception:
-            two = ""
-        print(f"{function_name}(*{one}) -> {two}")
+def replay(fn: Callable, redis_instance: redis.Redis) -> None:
+    """
+    Display history of calls for a function
+    """
+    inputs_key = "{}:inputs".format(fn.__qualname__)
+    outputs_key = "{}:outputs".format(fn.__qualname__)
+
+    inputs = redis_instance.lrange(inputs_key, 0, -1)
+    outputs = redis_instance.lrange(outputs_key, 0, -1)
+
+    print("{} was called {} times:".format(fn.__qualname__, len(inputs)))
+
+    for input_args, output in zip(inputs, outputs):
+        input_args_str = input_args.decode("utf-8")
+        output_str = output.decode("utf-8")
+        print("{}(*{}) -> {}".format(fn.__qualname__,
+                                     input_args_str, output_str))
 
 
 class Cache:
