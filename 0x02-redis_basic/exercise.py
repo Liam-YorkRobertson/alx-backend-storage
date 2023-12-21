@@ -19,9 +19,11 @@ def count_calls(method: Callable) -> Callable:
         return method(self, *args, **kwargs)
     return wrapper
 
+
 def call_history(method: Callable) -> Callable:
     """
-    Decorator to store the history of inputs and outputs for a function in Redis.
+    Decorator to store the history of inputs and outputs
+    for a function in Redis.
     """
     @wraps(method)
     def wrapped(self, *args, **kwargs):
@@ -32,6 +34,25 @@ def call_history(method: Callable) -> Callable:
         self._redis.rpush(out_key, str(output))
         return output
     return wrapped
+
+
+def replay(fn: Callable, redis_instance: redis.Redis) -> None:
+    """
+    Display history of calls for a function
+    """
+    inputs_key = "{}:inputs".format(fn.__qualname__)
+    outputs_key = "{}:outputs".format(fn.__qualname__)
+
+    inputs = redis_instance.lrange(inputs_key, 0, -1)
+    outputs = redis_instance.lrange(outputs_key, 0, -1)
+
+    print("{} was called {} times:".format(fn.__qualname__, len(inputs)))
+
+    for input_args, output in zip(inputs, outputs):
+        input_args_str = input_args.decode("utf-8")
+        output_str = output.decode("utf-8")
+        print("{}(*{}) -> {}".format(fn.__qualname__,
+                                     input_args_str, output_str))
 
 
 class Cache:
