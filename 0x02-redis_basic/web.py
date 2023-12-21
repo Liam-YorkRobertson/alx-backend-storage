@@ -11,14 +11,14 @@ from datetime import datetime, timedelta
 
 def count_access(func: Callable) -> Callable:
     """
-    count the call to requests
+    count call to requests
     """
     redis_conn = redis.Redis()
 
     @wraps(func)
     def wrapper(url: str) -> str:
         """
-        function that will count and cache
+        counts
         """
         count_key = f"count:{url}"
         cached_key = f"cached:{url}"
@@ -26,15 +26,9 @@ def count_access(func: Callable) -> Callable:
         cached_result = redis_conn.get(cached_key)
         if cached_result:
             return cached_result.decode('utf-8')
-        start_time = datetime.now()
         html = func(url)
-        end_time = datetime.now()
         redis_conn.setex(cached_key, 10, html)
-        response_time = (end_time - start_time).total_seconds()
-
-        return f"Access Count: {access_count}, Response Time:
-            {response_time: .4f} seconds, HTML: {html}"
-
+        return f"Access Count: {access_count}, HTML: {html}"
     return wrapper
 
 
