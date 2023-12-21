@@ -31,6 +31,7 @@ def count_access(func: Callable) -> Callable:
         return f"Access Count: {access_count}, HTML: {html}"
     return wrapper
 
+
 @count_access
 def get_page(url: str) -> str:
     return requests.get(url).text
